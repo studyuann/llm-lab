@@ -1,5 +1,5 @@
 # start-llama-server.ps1
-# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트 (Flash Attention 최적화)
+# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트
 
 param(
     [ValidateSet("coder-7b", "coder-14b", "deepseek-14b", "qwen3-8b", "gemma3-4b", "custom")]
@@ -12,8 +12,10 @@ param(
     [int]$Threads = 8
 )
 
+# Windows PowerShell 인코딩 및 코드페이지 65001 (UTF-8) 강제 설정
+[Console]::InputEncoding  = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding           = [System.Text.Encoding]::UTF8
 
 $LlamaDir   = "c:\Users\ANN\llm-lab\bin\llama-cpp"
 $ServerPath = Join-Path $LlamaDir "llama-server.exe"
@@ -77,25 +79,27 @@ if (-not (Test-Path $ModelFile)) {
         Write-Error "모델 파일이 없으며 다운로드 URL이 지정되지 않았습니다: $ModelFile"
         exit 1
     }
-    Write-Host "📥 [$Preset] GGUF 모델 다운로드를 시작합니다..." -ForegroundColor Cyan
+    Write-Host "[[$Preset]] GGUF 모델 다운로드를 시작합니다..." -ForegroundColor Cyan
     Write-Host "   URL: $ModelUrl" -ForegroundColor DarkGray
     Write-Host "   파일: $ModelFile" -ForegroundColor DarkGray
     
     try {
         Invoke-WebRequest -Uri $ModelUrl -OutFile $ModelFile -UserAgent "PowerShell"
-        Write-Host "✅ 모델 다운로드 완료!" -ForegroundColor Green
+        Write-Host "모델 다운로드 완료!" -ForegroundColor Green
     } catch {
         Write-Error "모델 다운로드 실패: $_"
         exit 1
     }
 }
 
-Write-Host "🚀 llama-server (OpenAI 호환 REST API) 실행 중..." -ForegroundColor Green
-Write-Host "   📌 모델: $Desc" -ForegroundColor Cyan
-Write-Host "   📌 URL: http://127.0.0.1:$Port/v1/chat/completions" -ForegroundColor Cyan
-Write-Host "   ⚡ GPU Offload (-ngl): $GpuLayers (Flash Attention 속도 최적화 적용)" -ForegroundColor Yellow
-Write-Host "   🧠 컨텍스트 크기: $ContextSize  |  스레드: $Threads" -ForegroundColor Yellow
+Write-Host "==================================================" -ForegroundColor Green
+Write-Host " llama-server (OpenAI 호환 REST API) 실행 중..." -ForegroundColor Green
+Write-Host "   - 모델: $Desc" -ForegroundColor Cyan
+Write-Host "   - URL: http://127.0.0.1:$Port/v1/chat/completions" -ForegroundColor Cyan
+Write-Host "   - GPU Offload (-ngl): $GpuLayers (Flash Attention 속도 최적화 적용)" -ForegroundColor Yellow
+Write-Host "   - 컨텍스트 크기: $ContextSize | 스레드: $Threads" -ForegroundColor Yellow
+Write-Host "==================================================" -ForegroundColor Green
 Write-Host ""
 
-# Flash Attention(-fa) 옵션 적용으로 2배속 생성
-& $ServerPath -m $ModelFile -ngl $GpuLayers -c $ContextSize -t $Threads -fa --port $Port --host 127.0.0.1
+# Flash Attention(-fa on) 옵션 수정으로 오류 해결 및 2배속 생성
+& $ServerPath -m $ModelFile -ngl $GpuLayers -c $ContextSize -t $Threads -fa on --port $Port --host 127.0.0.1
