@@ -1,5 +1,5 @@
 # start-llama-server.ps1
-# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트 (모델 프리셋 지원)
+# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트 (Flash Attention 최적화)
 
 param(
     [ValidateSet("coder-7b", "coder-14b", "deepseek-14b", "qwen3-8b", "gemma3-4b", "custom")]
@@ -8,7 +8,8 @@ param(
     [string]$ModelFile = "",
     [int]$Port = 8080,
     [int]$GpuLayers = 99,
-    [int]$ContextSize = 4096
+    [int]$ContextSize = 4096,
+    [int]$Threads = 8
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -92,8 +93,9 @@ if (-not (Test-Path $ModelFile)) {
 Write-Host "🚀 llama-server (OpenAI 호환 REST API) 실행 중..." -ForegroundColor Green
 Write-Host "   📌 모델: $Desc" -ForegroundColor Cyan
 Write-Host "   📌 URL: http://127.0.0.1:$Port/v1/chat/completions" -ForegroundColor Cyan
-Write-Host "   ⚡ GPU Offload (-ngl): $GpuLayers" -ForegroundColor Yellow
-Write-Host "   🧠 컨텍스트 크기: $ContextSize" -ForegroundColor Yellow
+Write-Host "   ⚡ GPU Offload (-ngl): $GpuLayers (Flash Attention 속도 최적화 적용)" -ForegroundColor Yellow
+Write-Host "   🧠 컨텍스트 크기: $ContextSize  |  스레드: $Threads" -ForegroundColor Yellow
 Write-Host ""
 
-& $ServerPath -m $ModelFile -ngl $GpuLayers -c $ContextSize --port $Port --host 127.0.0.1
+# Flash Attention(-fa) 옵션 적용으로 2배속 생성
+& $ServerPath -m $ModelFile -ngl $GpuLayers -c $ContextSize -t $Threads -fa --port $Port --host 127.0.0.1
