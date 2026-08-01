@@ -12,7 +12,6 @@ param(
     [int]$Threads = 8
 )
 
-# Windows PowerShell 인코딩 및 코드페이지 65001 (UTF-8) 강제 설정
 [Console]::InputEncoding  = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding           = [System.Text.Encoding]::UTF8
@@ -22,7 +21,7 @@ $ServerPath = Join-Path $LlamaDir "llama-server.exe"
 $ModelsDir  = "c:\Users\ANN\llm-lab\models"
 
 if (-not (Test-Path $ServerPath)) {
-    Write-Error "llama-server.exe를 찾을 수 없습니다. 먼저 .\scripts\install-llama-cpp.ps1을 실행하세요."
+    Write-Error "llama-server.exe not found. Please run .\scripts\install-llama-cpp.ps1 first."
     exit 1
 }
 
@@ -31,32 +30,32 @@ $PresetTable = @{
     "coder-7b"     = @{
         fileName = "Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
         url      = "https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
-        gpuNgl   = 99 # 8GB VRAM 100% 가속
-        desc     = "Qwen2.5 Coder 7B (코딩 특화 7B 모델, 8GB VRAM 100% 가속)"
+        gpuNgl   = 99
+        desc     = "Qwen2.5 Coder 7B (8GB VRAM 100% GPU Accelerated)"
     }
     "coder-14b"    = @{
         fileName = "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf"
         url      = "https://huggingface.co/bartowski/Qwen2.5-Coder-14B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf"
-        gpuNgl   = 35 # 14B 모델 (GPU VRAM + RAM 오프로딩)
-        desc     = "Qwen2.5 Coder 14B (코딩/개발 능력 최상급 14B 모델)"
+        gpuNgl   = 35
+        desc     = "Qwen2.5 Coder 14B (High Intelligence 14B Model)"
     }
     "qwen3-8b"     = @{
         fileName = "Qwen3-8B-Q4_K_M.gguf"
         url      = "https://huggingface.co/bartowski/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf"
         gpuNgl   = 99
-        desc     = "Qwen3 8B (Qwen 3세대 범용 추론 모델)"
+        desc     = "Qwen3 8B (Qwen 3rd Gen Reasoning Model)"
     }
     "deepseek-14b" = @{
         fileName = "DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf"
         url      = "https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-14B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf"
         gpuNgl   = 35
-        desc     = "DeepSeek-R1 Distill 14B (사고력/Deep Reasoning 특화)"
+        desc     = "DeepSeek-R1 Distill 14B (Deep Reasoning Model)"
     }
     "gemma3-4b"    = @{
         fileName = "gemma-3-4b-it-Q4_K_M.gguf"
         url      = "https://huggingface.co/ggml-org/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf"
         gpuNgl   = 99
-        desc     = "Gemma 3 4B (Google 초경량 모델)"
+        desc     = "Gemma 3 4B (Google Ultra-lightweight Model)"
     }
 }
 
@@ -67,7 +66,7 @@ if ($Preset -ne "custom") {
     $GpuLayers = $config.gpuNgl
     $Desc      = $config.desc
 } else {
-    $Desc      = "커스텀 모델: $ModelFile"
+    $Desc      = "Custom Model: $ModelFile"
 }
 
 if (-not (Test-Path $ModelsDir)) {
@@ -76,30 +75,29 @@ if (-not (Test-Path $ModelsDir)) {
 
 if (-not (Test-Path $ModelFile)) {
     if (-not $ModelUrl) {
-        Write-Error "모델 파일이 없으며 다운로드 URL이 지정되지 않았습니다: $ModelFile"
+        Write-Error "Model file missing and no URL provided: $ModelFile"
         exit 1
     }
-    Write-Host "[[$Preset]] GGUF 모델 다운로드를 시작합니다..." -ForegroundColor Cyan
+    Write-Host "Downloading GGUF Model [$Preset]..." -ForegroundColor Cyan
     Write-Host "   URL: $ModelUrl" -ForegroundColor DarkGray
-    Write-Host "   파일: $ModelFile" -ForegroundColor DarkGray
+    Write-Host "   Path: $ModelFile" -ForegroundColor DarkGray
     
     try {
         Invoke-WebRequest -Uri $ModelUrl -OutFile $ModelFile -UserAgent "PowerShell"
-        Write-Host "모델 다운로드 완료!" -ForegroundColor Green
+        Write-Host "Download Complete!" -ForegroundColor Green
     } catch {
-        Write-Error "모델 다운로드 실패: $_"
+        Write-Error "Download Failed: $_"
         exit 1
     }
 }
 
 Write-Host "==================================================" -ForegroundColor Green
-Write-Host " llama-server (OpenAI 호환 REST API) 실행 중..." -ForegroundColor Green
-Write-Host "   - 모델: $Desc" -ForegroundColor Cyan
+Write-Host " llama-server (OpenAI REST API) Running..." -ForegroundColor Green
+Write-Host "   - Model: $Desc" -ForegroundColor Cyan
 Write-Host "   - URL: http://127.0.0.1:$Port/v1/chat/completions" -ForegroundColor Cyan
-Write-Host "   - GPU Offload (-ngl): $GpuLayers (Flash Attention 속도 최적화 적용)" -ForegroundColor Yellow
-Write-Host "   - 컨텍스트 크기: $ContextSize | 스레드: $Threads" -ForegroundColor Yellow
+Write-Host "   - GPU Offload (-ngl): $GpuLayers (Flash Attention: Enabled)" -ForegroundColor Yellow
+Write-Host "   - Context Size: $ContextSize | Threads: $Threads" -ForegroundColor Yellow
 Write-Host "==================================================" -ForegroundColor Green
 Write-Host ""
 
-# Flash Attention(-fa on) 옵션 수정으로 오류 해결 및 2배속 생성
 & $ServerPath -m $ModelFile -ngl $GpuLayers -c $ContextSize -t $Threads -fa on --port $Port --host 127.0.0.1
