@@ -105,3 +105,9 @@ llm-lab/
 - ✅ **C++ 네이티브 지연시간 최소화** (llama.cpp)
 - ✅ **표준 OpenAI REST API 호환** (`/v1/chat/completions`)
 - ✅ **틀려도 바로 검증 가능한 범위**에서 로컬 AI 활용
+
+
+# 14B 코딩 최상위 모델로 전환할 때
+.\scripts\start-llama-server.ps1 -Preset coder-14b
+# whichllm 1위 비전(VL) 모델로 전환할 때
+.\scripts\start-llama-server.ps1 -Preset vl-8b
