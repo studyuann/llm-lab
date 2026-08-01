@@ -1,4 +1,9 @@
+# commit-message.ps1
+# 커밋 메시지를 생성하는 스크립트 (llama.cpp 및 Ollama 호환)
+# 사용법: .\scripts\commit-message.ps1 -Conventional
+
 param(
+    [string]$Backend = "llamacpp",
     [string]$Model = "gemma3:4b",
     [int]$Count = 3,
     [switch]$Staged,
@@ -7,8 +12,6 @@ param(
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-
-$OllamaUrl = "http://localhost:11434/api/generate"
 
 function Get-GitDiff {
     if ($Staged) {
@@ -29,8 +32,44 @@ function Get-GitDiff {
     return $diff
 }
 
+function Invoke-LlamaCppCommit {
+    param([string]$diff, [int]$count, [bool]$conventional)
+    $url = "http://127.0.0.1:8080/v1/chat/completions"
+
+    $formatNote = if ($conventional) {
+        "Conventional Commits 형식(feat:, fix:, docs:, refactor:, test:, chore: 등)으로 작성하세요."
+    } else {
+        "간결하고 명확한 형식으로 작성하세요."
+    }
+
+    $instruction = "다음 git diff 변경사항을 분석하여 한국어로 된 커밋 메시지 후보 $count개를 만드세요.`n" + `
+                   "$formatNote`n" + `
+                   "오직 번호 목록 형태의 커밋 메시지만 출력하고, 서론이나 인사말은 생략하세요."
+
+    $bodyObj = @{
+        messages = @(
+            @{ role = "system"; content = $instruction },
+            @{ role = "user";   content = $diff }
+        )
+        temperature = 0.2
+        max_tokens  = 512
+    }
+
+    $jsonStr   = $bodyObj | ConvertTo-Json -Depth 5
+    $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($jsonStr)
+
+    try {
+        $response = Invoke-RestMethod -Uri $url -Method Post -Body $bodyBytes -ContentType "application/json; charset=utf-8" -TimeoutSec 180
+        return $response.choices[0].message.content
+    } catch {
+        Write-Error "llama.cpp 서버 연결 실패: $_"
+        exit 1
+    }
+}
+
 function Invoke-OllamaCommit {
     param([string]$diff, [string]$model, [int]$count, [bool]$conventional)
+    $url = "http://localhost:11434/api/generate"
 
     $formatNote = if ($conventional) {
         "Conventional Commits 형식(feat:, fix:, docs:, refactor:, test:, chore: 등)으로 작성하세요."
@@ -51,14 +90,13 @@ function Invoke-OllamaCommit {
         options = @{
             temperature = 0.2
             num_predict = 512
-            top_p       = 0.9
         }
     } | ConvertTo-Json -Depth 3
 
     $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($body)
 
     try {
-        $response = Invoke-RestMethod -Uri $OllamaUrl -Method Post -Body $bodyBytes -ContentType "application/json; charset=utf-8" -TimeoutSec 180
+        $response = Invoke-RestMethod -Uri $url -Method Post -Body $bodyBytes -ContentType "application/json; charset=utf-8" -TimeoutSec 180
         return $response.response
     } catch {
         Write-Error "Ollama error: $_"
@@ -76,14 +114,18 @@ if (-not $diff.Trim()) {
 
 $lineCount = ($diff -split "`n").Count
 Write-Host "Changed lines: $lineCount" -ForegroundColor Green
-Write-Host "Model: $Model" -ForegroundColor Green
+Write-Host "Backend: $Backend" -ForegroundColor Green
 Write-Host "Generating commit messages..." -ForegroundColor Yellow
 Write-Host ""
 
-$result = Invoke-OllamaCommit -diff $diff -model $Model -count $Count -conventional $Conventional.IsPresent
+if ($Backend -eq "llamacpp") {
+    $result = Invoke-LlamaCppCommit -diff $diff -count $Count -conventional $Conventional.IsPresent
+} else {
+    $result = Invoke-OllamaCommit -diff $diff -model $Model -count $Count -conventional $Conventional.IsPresent
+}
 
 Write-Host "------------------------------------" -ForegroundColor DarkGray
-Write-Host "Commit Message Candidates" -ForegroundColor Cyan
+Write-Host "Commit Message Candidates [$Backend]" -ForegroundColor Cyan
 Write-Host "------------------------------------" -ForegroundColor DarkGray
 Write-Host $result
 Write-Host "------------------------------------" -ForegroundColor DarkGray

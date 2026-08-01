@@ -2,6 +2,10 @@
 node_modules/
 npm-debug.log*
 
+# Binaries & Models (Local Install)
+bin/
+models/
+
 # OS / Editor
 .DS_Store
 Thumbs.db
