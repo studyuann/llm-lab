@@ -1,8 +1,8 @@
 # start-llama-server.ps1
-# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트
+# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트 (whichllm 비전 모델 프리셋 포함)
 
 param(
-    [ValidateSet("coder-7b", "coder-14b", "deepseek-14b", "qwen3-8b", "gemma3-4b", "custom")]
+    [ValidateSet("coder-7b", "coder-14b", "vl-8b", "qwen3-8b", "deepseek-14b", "gemma3-4b", "custom")]
     [string]$Preset = "coder-7b",
 
     [string]$ModelFile = "",
@@ -31,13 +31,19 @@ $PresetTable = @{
         fileName = "Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
         url      = "https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
         gpuNgl   = 99
-        desc     = "Qwen2.5 Coder 7B (8GB VRAM 100% GPU Accelerated)"
+        desc     = "Qwen2.5 Coder 7B (8GB VRAM 100% Full GPU Coding)"
     }
     "coder-14b"    = @{
         fileName = "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf"
         url      = "https://huggingface.co/bartowski/Qwen2.5-Coder-14B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf"
         gpuNgl   = 35
         desc     = "Qwen2.5 Coder 14B (High Intelligence 14B Model)"
+    }
+    "vl-8b"        = @{
+        fileName = "Qwen3-VL-8B-Instruct-Q5_K_M.gguf"
+        url      = "https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q5_K_M.gguf"
+        gpuNgl   = 99
+        desc     = "Qwen3 VL 8B (whichllm #1 Recommended Vision+Text Model, VRAM 7.4GB)"
     }
     "qwen3-8b"     = @{
         fileName = "Qwen3-8B-Q4_K_M.gguf"
