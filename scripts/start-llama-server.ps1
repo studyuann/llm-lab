@@ -2,7 +2,7 @@
 # llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트 (모델 프리셋 지원)
 
 param(
-    [ValidateSet("coder-7b", "coder-14b", "deepseek-14b", "gemma3-4b", "custom")]
+    [ValidateSet("coder-7b", "coder-14b", "deepseek-14b", "qwen3-8b", "gemma3-4b", "custom")]
     [string]$Preset = "coder-7b",
 
     [string]$ModelFile = "",
@@ -29,25 +29,31 @@ $PresetTable = @{
         fileName = "Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
         url      = "https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
         gpuNgl   = 99 # 8GB VRAM 100% 가속
-        desc     = "Qwen2.5 Coder 7B (8GB VRAM 100% 초고속 추천)"
+        desc     = "Qwen2.5 Coder 7B (코딩 특화 7B 모델, 8GB VRAM 100% 가속)"
     }
     "coder-14b"    = @{
         fileName = "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf"
         url      = "https://huggingface.co/bartowski/Qwen2.5-Coder-14B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf"
-        gpuNgl   = 35 # 14B 모델 (GPU VRAM + RAM 부분 오프로딩)
-        desc     = "Qwen2.5 Coder 14B (코딩/성능 최상급 14B 모델)"
+        gpuNgl   = 35 # 14B 모델 (GPU VRAM + RAM 오프로딩)
+        desc     = "Qwen2.5 Coder 14B (코딩/개발 능력 최상급 14B 모델)"
+    }
+    "qwen3-8b"     = @{
+        fileName = "Qwen3-8B-Q4_K_M.gguf"
+        url      = "https://huggingface.co/bartowski/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf"
+        gpuNgl   = 99
+        desc     = "Qwen3 8B (Qwen 3세대 범용 추론 모델)"
     }
     "deepseek-14b" = @{
         fileName = "DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf"
         url      = "https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-14B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf"
-        gpuNgl   = 35 # DeepSeek 추론 모델
-        desc     = "DeepSeek-R1 Distill 14B (추론/사고력 강화 14B 모델)"
+        gpuNgl   = 35
+        desc     = "DeepSeek-R1 Distill 14B (사고력/Deep Reasoning 특화)"
     }
     "gemma3-4b"    = @{
         fileName = "gemma-3-4b-it-Q4_K_M.gguf"
         url      = "https://huggingface.co/ggml-org/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf"
         gpuNgl   = 99
-        desc     = "Gemma 3 4B (초경량 무소음 모델)"
+        desc     = "Gemma 3 4B (Google 초경량 모델)"
     }
 }
 
