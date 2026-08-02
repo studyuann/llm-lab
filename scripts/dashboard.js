@@ -27,8 +27,14 @@ const PRESETS = {
     url: 'https://huggingface.co/bartowski/Qwen2.5-Coder-14B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf',
     gpuNgl: 35
   },
-  'vl-8b': {
-    name: 'Qwen3-VL 8B (whichllm 1위 추천 비전+텍스트 멀티모달)',
+  'vl-8b-thinking': {
+    name: 'Qwen3-VL 8B Thinking (whichllm #1 추천 비전+추론, Score 60.5)',
+    fileName: 'Qwen3-VL-8B-Thinking-Q5_K_M.gguf',
+    url: 'https://huggingface.co/bartowski/Qwen3-VL-8B-Thinking-GGUF/resolve/main/Qwen3-VL-8B-Thinking-Q5_K_M.gguf',
+    gpuNgl: 99
+  },
+  'vl-8b-instruct': {
+    name: 'Qwen3-VL 8B Instruct (whichllm #2 추천 비전+지시응답, Score 59.9)',
     fileName: 'Qwen3-VL-8B-Instruct-Q5_K_M.gguf',
     url: 'https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q5_K_M.gguf',
     gpuNgl: 99
@@ -108,7 +114,7 @@ const HTML_PAGE = `<!DOCTYPE html>
     header { background: #1e293b; padding: 15px 25px; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
     h1 { font-size: 1.2rem; font-weight: 600; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
     .controls { display: flex; align-items: center; gap: 12px; }
-    select { background: #0f172a; color: #f8fafc; border: 1px solid #475569; padding: 8px 14px; border-radius: 8px; font-size: 0.95rem; outline: none; cursor: pointer; min-width: 380px; }
+    select { background: #0f172a; color: #f8fafc; border: 1px solid #475569; padding: 8px 14px; border-radius: 8px; font-size: 0.95rem; outline: none; cursor: pointer; min-width: 420px; }
     select:focus { border-color: #38bdf8; }
     button { background: #0284c7; color: white; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
     button:hover { background: #0369a1; }
@@ -125,7 +131,8 @@ const HTML_PAGE = `<!DOCTYPE html>
       <select id="modelSelect">
         <option value="coder-7b">⚡ Qwen2.5-Coder 7B (코딩 특화, 8GB VRAM 100% 가속)</option>
         <option value="coder-14b">🧠 Qwen2.5-Coder 14B (코딩/개발 능력 최상급 14B)</option>
-        <option value="vl-8b">👁️ Qwen3-VL 8B (whichllm 1위 비전+텍스트 멀티모달)</option>
+        <option value="vl-8b-thinking">🧠 Qwen3-VL 8B Thinking (whichllm #1 추천 비전+추론, Score 60.5)</option>
+        <option value="vl-8b-instruct">👁️ Qwen3-VL 8B Instruct (whichllm #2 추천 비전+지시응답, Score 59.9)</option>
         <option value="deepseek-14b">💡 DeepSeek-R1 Distill 14B (사고력/추론 특화)</option>
         <option value="qwen3-8b">🌐 Qwen3 8B (3세대 범용 추론 모델)</option>
         <option value="gemma3-4b">⚡ Gemma 3 4B (Google 초경량)</option>
