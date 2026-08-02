@@ -3,7 +3,7 @@
 
 const http = require('http');
 const { spawn, execSync } = require('child_process');
-const path = require('path');
+const path = path = require('path');
 const fs = require('fs');
 
 const PORT = 3000;
@@ -89,8 +89,12 @@ function startLlamaServer(presetKey, callback) {
 
   if (!modelPath) {
     modelPath = path.join(MODELS_DIR, preset.fileNameCandidates[0]);
-    console.log(`[다운로드] ${preset.name} 다운로드 중...`);
-    execSync(`powershell -Command "Invoke-WebRequest -Uri '${preset.url}' -OutFile '${modelPath}' -UserAgent 'PowerShell'"`);
+    console.log(`[다운로드] ${preset.name} 초고속 다운로드 중...`);
+    try {
+      execSync(`curl.exe -L -o "${modelPath}" "${preset.url}"`, { stdio: 'inherit' });
+    } catch (e) {
+      execSync(`powershell -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri '${preset.url}' -OutFile '${modelPath}' -UserAgent 'PowerShell'"`);
+    }
   }
 
   console.log(`[실행] llama-server (${preset.name}) Flash-Attn 적용 구동 중... (${modelPath})`);
