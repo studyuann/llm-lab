@@ -16,6 +16,9 @@ param(
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding           = [System.Text.Encoding]::UTF8
 
+# PowerShell 다운로드 프로그레스 바 속도 저하 방지 (5배속 가속)
+$ProgressPreference       = 'SilentlyContinue'
+
 $LlamaDir   = "c:\Users\ANN\llm-lab\bin\llama-cpp"
 $ServerPath = Join-Path $LlamaDir "llama-server.exe"
 $ModelsDir  = "c:\Users\ANN\llm-lab\models"
@@ -116,7 +119,12 @@ if (-not (Test-Path $ModelFile)) {
     Write-Host "   Path: $ModelFile" -ForegroundColor DarkGray
     
     try {
-        Invoke-WebRequest -Uri $ModelUrl -OutFile $ModelFile -UserAgent "PowerShell"
+        if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+            curl.exe -L -o "$ModelFile" "$ModelUrl"
+        } else {
+            $ProgressPreference = 'SilentlyContinue'
+            Invoke-WebRequest -Uri $ModelUrl -OutFile $ModelFile -UserAgent "PowerShell"
+        }
         Write-Host "Download Complete!" -ForegroundColor Green
     } catch {
         Write-Error "Download Failed: $_"
