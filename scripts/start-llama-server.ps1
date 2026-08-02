@@ -1,5 +1,5 @@
 # start-llama-server.ps1
-# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트
+# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트 (개별 웹 UI http://127.0.0.1:8080 100% 지원)
 
 param(
     [ValidateSet("coder-7b", "coder-14b", "vl-8b-thinking", "vl-8b-instruct", "vl-8b", "qwen3-8b", "deepseek-14b", "gemma3-4b", "custom")]
@@ -50,7 +50,7 @@ $PresetTable = @{
     }
     "vl-8b-instruct"  = @{
         fileNameCandidates = @("Qwen3VL-8B-Instruct-Q4_K_M.gguf", "Qwen3-VL-8B-Instruct-Q5_K_M.gguf", "Qwen3-VL-8B-Instruct-Q4_K_M.gguf")
-        url      = "https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q4_K_M.gguf"
+        url      = "https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q5_K_M.gguf"
         gpuNgl   = 99
         desc     = "Qwen3 VL 8B Instruct (whichllm #2 Recommended Vision+Text, Score 59.9)"
     }
@@ -133,10 +133,11 @@ if (-not (Test-Path $ModelFile)) {
 }
 
 Write-Host "==================================================" -ForegroundColor Green
-Write-Host " llama-server (OpenAI REST API) Running..." -ForegroundColor Green
+Write-Host " llama-server (OpenAI REST API & Independent Web UI) Running..." -ForegroundColor Green
 Write-Host "   - Model: $Desc" -ForegroundColor Cyan
 Write-Host "   - Path:  $ModelFile" -ForegroundColor Cyan
-Write-Host "   - URL: http://127.0.0.1:$Port/v1/chat/completions" -ForegroundColor Cyan
+Write-Host "   - URL: http://127.0.0.1:$Port (단독 웹 접속 주소)" -ForegroundColor Cyan
+Write-Host "   - API: http://127.0.0.1:$Port/v1/chat/completions" -ForegroundColor Cyan
 Write-Host "   - GPU Offload (-ngl): $GpuLayers (Flash Attention: Enabled)" -ForegroundColor Yellow
 Write-Host "   - Context Size: $ContextSize | Threads: $Threads" -ForegroundColor Yellow
 Write-Host "==================================================" -ForegroundColor Green
