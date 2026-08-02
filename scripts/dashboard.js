@@ -3,7 +3,7 @@
 
 const http = require('http');
 const { spawn, execSync } = require('child_process');
-const path = path = require('path');
+const path = require('path');
 const fs = require('fs');
 
 const PORT = 3000;
@@ -62,9 +62,9 @@ const PRESETS = {
 function killLlamaServer() {
   try {
     execSync('taskkill /F /IM llama-server.exe 2>nul');
-  } catch (e) {}
+  } catch (e) { }
   if (currentServerProcess) {
-    try { currentServerProcess.kill(); } catch (e) {}
+    try { currentServerProcess.kill(); } catch (e) { }
     currentServerProcess = null;
   }
 }
