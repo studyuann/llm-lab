@@ -36,7 +36,7 @@ const PRESETS = {
   'vl-8b-instruct': {
     name: 'Qwen3-VL 8B Instruct (whichllm #2 추천 비전+지시응답, Score 59.9)',
     fileNameCandidates: ['Qwen3VL-8B-Instruct-Q4_K_M.gguf', 'Qwen3-VL-8B-Instruct-Q5_K_M.gguf', 'Qwen3-VL-8B-Instruct-Q4_K_M.gguf'],
-    url: 'https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q4_K_M.gguf',
+    url: 'https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q5_K_M.gguf',
     gpuNgl: 99
   },
   'deepseek-14b': {
@@ -128,7 +128,7 @@ const HTML_PAGE = `<!DOCTYPE html>
     button:hover { background: #0369a1; }
     .badge { background: #166534; color: #4ade80; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
     iframe { flex: 1; border: none; width: 100%; height: 100%; background: #ffffff; }
-    .status-toast { display: none; background: #0284c7; color: white; padding: 10px 20px; position: fixed; top: 70px; right: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); font-size: 0.9rem; z-index: 100; }
+    .status-toast { display: none; background: #0284c7; color: white; padding: 12px 24px; position: fixed; top: 70px; right: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); font-size: 0.95rem; z-index: 100; }
   </style>
 </head>
 <body>
@@ -148,29 +148,40 @@ const HTML_PAGE = `<!DOCTYPE html>
       <button onclick="switchModel()">🔄 백그라운드 재가동 및 적용</button>
     </div>
   </header>
-  <div class="status-toast" id="toast">모델 교체 중... 잠시만 기다려주세요.</div>
+  <div class="status-toast" id="toast">⚙️ 모델 교체 및 GPU 메모리 로드 중... 잠시만 기다려주세요.</div>
   <iframe id="llamaFrame" src="http://127.0.0.1:8080"></iframe>
 
   <script>
+    async function checkServerReady() {
+      for (let i = 0; i < 30; i++) {
+        try {
+          const res = await fetch('http://127.0.0.1:8080/v1/models');
+          if (res.ok) return true;
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      return false;
+    }
+
     async function switchModel() {
       const preset = document.getElementById('modelSelect').value;
       const toast = document.getElementById('toast');
       const badge = document.getElementById('statusBadge');
       toast.style.display = 'block';
-      toast.innerText = '⚙️ 기존 서버 종료 후 새 모델(' + preset + ') Flash-Attn 재가동 중...';
+      toast.innerText = '⚙️ 기존 서버 종료 후 새 모델(' + preset + ') GPU 메모리 로드 중...';
       
       try {
-        const res = await fetch('/api/switch', {
+        await fetch('/api/switch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ preset })
         });
-        const data = await res.json();
-        setTimeout(() => {
-          document.getElementById('llamaFrame').src = 'http://127.0.0.1:8080?' + Date.now();
-          toast.style.display = 'none';
-          badge.innerText = '⚡ ' + preset + ' 구동 중';
-        }, 3000);
+        
+        await checkServerReady();
+        
+        document.getElementById('llamaFrame').src = 'http://127.0.0.1:8080?' + Date.now();
+        toast.style.display = 'none';
+        badge.innerText = '⚡ ' + preset + ' 구동 중';
       } catch (err) {
         alert('모델 교체 중 오류가 발생했습니다.');
         toast.style.display = 'none';
@@ -199,6 +210,12 @@ const server = http.createServer((req, res) => {
   } else {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(HTML_PAGE);
+  }
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`[안내] 포트 ${PORT}가 이미 사용 중입니다. 기존 프로세스를 정리합니다...`);
   }
 });
 
