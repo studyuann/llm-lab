@@ -1,5 +1,5 @@
 # start-llama-server.ps1
-# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트 (whichllm 비전 모델 프리셋 포함)
+# llama.cpp (llama-server.exe) GPU 가속 서버 실행 스크립트
 
 param(
     [ValidateSet("coder-7b", "coder-14b", "vl-8b-thinking", "vl-8b-instruct", "vl-8b", "qwen3-8b", "deepseek-14b", "gemma3-4b", "custom")]
@@ -25,52 +25,52 @@ if (-not (Test-Path $ServerPath)) {
     exit 1
 }
 
-# 모델 프리셋 정의 (Qwen3-VL Thinking & Instruct 세분화)
+# 모델 프리셋 정의 (사용자가 models/ 폴더에 직접 넣은 Qwen3VL Q4_K_M 파일 감지 지원)
 $PresetTable = @{
     "coder-7b"        = @{
-        fileName = "Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
+        fileNameCandidates = @("Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf")
         url      = "https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf"
         gpuNgl   = 99
         desc     = "Qwen2.5 Coder 7B (8GB VRAM 100% Full GPU Coding)"
     }
     "coder-14b"       = @{
-        fileName = "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf"
+        fileNameCandidates = @("Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf")
         url      = "https://huggingface.co/bartowski/Qwen2.5-Coder-14B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf"
         gpuNgl   = 35
         desc     = "Qwen2.5 Coder 14B (High Intelligence 14B Model)"
     }
     "vl-8b-thinking"  = @{
-        fileName = "Qwen3-VL-8B-Thinking-Q5_K_M.gguf"
-        url      = "https://huggingface.co/bartowski/Qwen3-VL-8B-Thinking-GGUF/resolve/main/Qwen3-VL-8B-Thinking-Q5_K_M.gguf"
+        fileNameCandidates = @("Qwen3VL-8B-Thinking-Q4_K_M.gguf", "Qwen3-VL-8B-Thinking-Q5_K_M.gguf", "Qwen3-VL-8B-Thinking-Q4_K_M.gguf")
+        url      = "https://huggingface.co/bartowski/Qwen3-VL-8B-Thinking-GGUF/resolve/main/Qwen3-VL-8B-Thinking-Q4_K_M.gguf"
         gpuNgl   = 99
-        desc     = "Qwen3 VL 8B Thinking (whichllm #1 Recommended Vision+Thinking, VRAM 7.4GB, Score 60.5)"
+        desc     = "Qwen3 VL 8B Thinking (whichllm #1 Recommended Vision+Thinking, Score 60.5)"
     }
     "vl-8b-instruct"  = @{
-        fileName = "Qwen3-VL-8B-Instruct-Q5_K_M.gguf"
-        url      = "https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q5_K_M.gguf"
+        fileNameCandidates = @("Qwen3VL-8B-Instruct-Q4_K_M.gguf", "Qwen3-VL-8B-Instruct-Q5_K_M.gguf", "Qwen3-VL-8B-Instruct-Q4_K_M.gguf")
+        url      = "https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q4_K_M.gguf"
         gpuNgl   = 99
-        desc     = "Qwen3 VL 8B Instruct (whichllm #2 Recommended Vision+Text, VRAM 7.4GB, Score 59.9)"
+        desc     = "Qwen3 VL 8B Instruct (whichllm #2 Recommended Vision+Text, Score 59.9)"
     }
     "vl-8b"           = @{
-        fileName = "Qwen3-VL-8B-Thinking-Q5_K_M.gguf"
-        url      = "https://huggingface.co/bartowski/Qwen3-VL-8B-Thinking-GGUF/resolve/main/Qwen3-VL-8B-Thinking-Q5_K_M.gguf"
+        fileNameCandidates = @("Qwen3VL-8B-Thinking-Q4_K_M.gguf", "Qwen3VL-8B-Instruct-Q4_K_M.gguf")
+        url      = "https://huggingface.co/bartowski/Qwen3-VL-8B-Thinking-GGUF/resolve/main/Qwen3-VL-8B-Thinking-Q4_K_M.gguf"
         gpuNgl   = 99
         desc     = "Qwen3 VL 8B Thinking (whichllm #1 Recommended Vision+Thinking)"
     }
     "qwen3-8b"        = @{
-        fileName = "Qwen3-8B-Q4_K_M.gguf"
+        fileNameCandidates = @("Qwen3-8B-Q4_K_M.gguf")
         url      = "https://huggingface.co/bartowski/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf"
         gpuNgl   = 99
         desc     = "Qwen3 8B (Qwen 3rd Gen Reasoning Model)"
     }
     "deepseek-14b"    = @{
-        fileName = "DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf"
+        fileNameCandidates = @("DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf")
         url      = "https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-14B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf"
         gpuNgl   = 35
         desc     = "DeepSeek-R1 Distill 14B (Deep Reasoning Model)"
     }
     "gemma3-4b"       = @{
-        fileName = "gemma-3-4b-it-Q4_K_M.gguf"
+        fileNameCandidates = @("gemma-3-4b-it-Q4_K_M.gguf")
         url      = "https://huggingface.co/ggml-org/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf"
         gpuNgl   = 99
         desc     = "Gemma 3 4B (Google Ultra-lightweight Model)"
@@ -79,10 +79,25 @@ $PresetTable = @{
 
 if ($Preset -ne "custom") {
     $config    = $PresetTable[$Preset]
-    $ModelFile = Join-Path $ModelsDir $config.fileName
-    $ModelUrl  = $config.url
     $GpuLayers = $config.gpuNgl
     $Desc      = $config.desc
+    $ModelUrl  = $config.url
+
+    # models/ 폴더 내 매칭되는 후보 파일 찾기
+    $FoundFile = $null
+    foreach ($cand in $config.fileNameCandidates) {
+        $testPath = Join-Path $ModelsDir $cand
+        if (Test-Path $testPath) {
+            $FoundFile = $testPath
+            break
+        }
+    }
+
+    if ($FoundFile) {
+        $ModelFile = $FoundFile
+    } else {
+        $ModelFile = Join-Path $ModelsDir $config.fileNameCandidates[0]
+    }
 } else {
     $Desc      = "Custom Model: $ModelFile"
 }
@@ -112,6 +127,7 @@ if (-not (Test-Path $ModelFile)) {
 Write-Host "==================================================" -ForegroundColor Green
 Write-Host " llama-server (OpenAI REST API) Running..." -ForegroundColor Green
 Write-Host "   - Model: $Desc" -ForegroundColor Cyan
+Write-Host "   - Path:  $ModelFile" -ForegroundColor Cyan
 Write-Host "   - URL: http://127.0.0.1:$Port/v1/chat/completions" -ForegroundColor Cyan
 Write-Host "   - GPU Offload (-ngl): $GpuLayers (Flash Attention: Enabled)" -ForegroundColor Yellow
 Write-Host "   - Context Size: $ContextSize | Threads: $Threads" -ForegroundColor Yellow

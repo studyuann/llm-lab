@@ -17,43 +17,43 @@ let currentPreset = 'coder-7b';
 const PRESETS = {
   'coder-7b': {
     name: 'Qwen2.5-Coder 7B (코딩 특화, 8GB VRAM 100% 초고속 추천)',
-    fileName: 'Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf',
+    fileNameCandidates: ['Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf'],
     url: 'https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf',
     gpuNgl: 99
   },
   'coder-14b': {
     name: 'Qwen2.5-Coder 14B (코딩/개발 능력 최상급 14B 모델)',
-    fileName: 'Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf',
+    fileNameCandidates: ['Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf'],
     url: 'https://huggingface.co/bartowski/Qwen2.5-Coder-14B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf',
     gpuNgl: 35
   },
   'vl-8b-thinking': {
     name: 'Qwen3-VL 8B Thinking (whichllm #1 추천 비전+추론, Score 60.5)',
-    fileName: 'Qwen3-VL-8B-Thinking-Q5_K_M.gguf',
-    url: 'https://huggingface.co/bartowski/Qwen3-VL-8B-Thinking-GGUF/resolve/main/Qwen3-VL-8B-Thinking-Q5_K_M.gguf',
+    fileNameCandidates: ['Qwen3VL-8B-Thinking-Q4_K_M.gguf', 'Qwen3-VL-8B-Thinking-Q5_K_M.gguf', 'Qwen3-VL-8B-Thinking-Q4_K_M.gguf'],
+    url: 'https://huggingface.co/bartowski/Qwen3-VL-8B-Thinking-GGUF/resolve/main/Qwen3-VL-8B-Thinking-Q4_K_M.gguf',
     gpuNgl: 99
   },
   'vl-8b-instruct': {
     name: 'Qwen3-VL 8B Instruct (whichllm #2 추천 비전+지시응답, Score 59.9)',
-    fileName: 'Qwen3-VL-8B-Instruct-Q5_K_M.gguf',
-    url: 'https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q5_K_M.gguf',
+    fileNameCandidates: ['Qwen3VL-8B-Instruct-Q4_K_M.gguf', 'Qwen3-VL-8B-Instruct-Q5_K_M.gguf', 'Qwen3-VL-8B-Instruct-Q4_K_M.gguf'],
+    url: 'https://huggingface.co/bartowski/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q4_K_M.gguf',
     gpuNgl: 99
   },
   'deepseek-14b': {
     name: 'DeepSeek-R1 Distill 14B (사고력/Deep Reasoning 특화)',
-    fileName: 'DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf',
+    fileNameCandidates: ['DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf'],
     url: 'https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-14B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf',
     gpuNgl: 35
   },
   'qwen3-8b': {
     name: 'Qwen3 8B (Qwen 3세대 범용 추론 모델)',
-    fileName: 'Qwen3-8B-Q4_K_M.gguf',
+    fileNameCandidates: ['Qwen3-8B-Q4_K_M.gguf'],
     url: 'https://huggingface.co/bartowski/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf',
     gpuNgl: 99
   },
   'gemma3-4b': {
     name: 'Gemma 3 4B (Google 초경량 모델)',
-    fileName: 'gemma-3-4b-it-Q4_K_M.gguf',
+    fileNameCandidates: ['gemma-3-4b-it-Q4_K_M.gguf'],
     url: 'https://huggingface.co/ggml-org/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf',
     gpuNgl: 99
   }
@@ -74,18 +74,26 @@ function startLlamaServer(presetKey, callback) {
   const preset = PRESETS[presetKey] || PRESETS['coder-7b'];
   currentPreset = presetKey;
 
-  const modelPath = path.join(MODELS_DIR, preset.fileName);
-
   if (!fs.existsSync(MODELS_DIR)) {
     fs.mkdirSync(MODELS_DIR, { recursive: true });
   }
 
-  if (!fs.existsSync(modelPath)) {
+  let modelPath = null;
+  for (const cand of preset.fileNameCandidates) {
+    const testP = path.join(MODELS_DIR, cand);
+    if (fs.existsSync(testP)) {
+      modelPath = testP;
+      break;
+    }
+  }
+
+  if (!modelPath) {
+    modelPath = path.join(MODELS_DIR, preset.fileNameCandidates[0]);
     console.log(`[다운로드] ${preset.name} 다운로드 중...`);
     execSync(`powershell -Command "Invoke-WebRequest -Uri '${preset.url}' -OutFile '${modelPath}' -UserAgent 'PowerShell'"`);
   }
 
-  console.log(`[실행] llama-server (${preset.name}) Flash-Attn 적용 구동 중...`);
+  console.log(`[실행] llama-server (${preset.name}) Flash-Attn 적용 구동 중... (${modelPath})`);
   const args = [
     '-m', modelPath,
     '-ngl', String(preset.gpuNgl),
